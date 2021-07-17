@@ -183,7 +183,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
         for (const BoundingBox& previousBoundingBox : prevFrame.boundingBoxes) 
         {
-             if (previousBoundingBox.roi.contains(previousPoint)
+             if (previousBoundingBox.roi.contains(previousPoint))
              {
                 previousBoundingBoxmatchCounter++;
                 if (previousBoundingBoxmatchCounter > 1) 
@@ -198,7 +198,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
         for (const BoundingBox& currentBoundingBox : currFrame.boundingBoxes)
         {
-             if (currentBoundingBox.roi.contains(currentPoint)
+             if (currentBoundingBox.roi.contains(currentPoint))
              {
                 currentBoundingBoxmatchCounter++;
                 if (currentBoundingBoxmatchCounter > 1) 
