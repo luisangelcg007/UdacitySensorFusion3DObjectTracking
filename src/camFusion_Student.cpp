@@ -159,5 +159,71 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    std::map<pair<int, int>, int> counts;
+
+    const int columns = (int)(prevFrame.boundingBoxes.size());
+    const int rows = (int)(currFrame.boundingBoxes.size());
+
+    std::vector<std::vector<int>> TemporalMatchesList(columns, std::vector<int>(rows, 0));
+
+    for (const auto& dMatch : matches) 
+    {
+        const int current_idx = dMatch.trainIdx;
+        const int previous_idx = dMatch.queryIdx;
+
+        // get points for previous and current frame
+        const cv::Point2f currentPoint = currFrame.keypoints[current_idx].pt;
+        const cv::Point2f previousPoint = prevFrame.keypoints[previous_idx].pt;
+
+        int previousBoundingBoxmatchCounter = 0;
+        int currentBoundingBoxmatchCounter = 0;
+
+        int previousBoundingBoxmatchingBoxId = -1;
+        int currentBoundingBoxmatchingBoxId = -1;
+
+        for (const BoundingBox& previousBoundingBox : prevFrame.boundingBoxes) 
+        {
+             if (previousBoundingBox.roi.contains(previousPoint)
+             {
+                previousBoundingBoxmatchCounter++;
+                if (previousBoundingBoxmatchCounter > 1) 
+                {
+                    previousBoundingBoxmatchingBoxId = -1;
+                    break;
+                }
+
+                previousBoundingBoxmatchingBoxId = previousBoundingBox.boxID;
+            }
+        }
+
+        for (const BoundingBox& currentBoundingBox : currFrame.boundingBoxes)
+        {
+             if (currentBoundingBox.roi.contains(currentPoint)
+             {
+                currentBoundingBoxmatchCounter++;
+                if (currentBoundingBoxmatchCounter > 1) 
+                {
+                    currentBoundingBoxmatchingBoxId = -1;
+                    break;
+                }
+
+                currentBoundingBoxmatchingBoxId = currentBoundingBox.boxID;
+            }
+        }
+        
+        if ((previousBoundingBoxmatchCounter==1) && (currentBoundingBoxmatchCounter == 1))
+        {
+            TemporalMatchesList.at(previousBoundingBoxmatchingBoxId).at(currentBoundingBoxmatchingBoxId)++;
+        }
+    }
+
+    for (int columnIndex = 0; columnIndex < columns; columnIndex++) 
+    {
+        for (int rowIndex = 0; rowIndex < rows; rowIndex++)
+
+        if (TemporalMatchesList.at(columnIndex).at(rowIndex) == 1)
+        {
+            bbBestMatches[prevFrame.boundingBoxes.at(columnIndex).boxID] = currFrame.boundingBoxes.at(rowIndex).boxID;
+        }        
+    }
 }
