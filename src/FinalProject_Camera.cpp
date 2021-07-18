@@ -418,7 +418,7 @@ int main(int argc, const char *argv[])
                     } // eof TTC computation
                     else 
                     {
-                        timeInformation[timeInformationIndex].ttcCamera.at(imgIndex) = info.ttcLidar.at(imgIndex) = 0.0;
+                        timeInformation[timeInformationIndex].ttcCamera.at(imgIndex) = timeInformation[timeInformationIndex].ttcLidar.at(imgIndex) = 0.0;
                         timeInformation[timeInformationIndex].enoughLidarOrCameraPointsDetected.at(imgIndex) = false;
                     }
                 } // eof loop over all BB matches            
