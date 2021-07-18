@@ -4,6 +4,8 @@
 
 using namespace std;
 
+static CollectedData collectedData;
+
 // Find best matches for keypoints in two camera images based on several matching methods
 CollectedData matchDescriptors( std::vector<cv::KeyPoint> &kPtsSource, 
                                 std::vector<cv::KeyPoint> &kPtsRef, 
