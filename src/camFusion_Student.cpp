@@ -152,43 +152,43 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         const cv::Point2f currentPoint = currFrame.keypoints[current_idx].pt;
         const cv::Point2f previousPoint = prevFrame.keypoints[previous_idx].pt;
 
-        int previousBoundingBoxmatchCounter = 0;
-        int currentBoundingBoxmatchCounter = 0;
+        int previousBoundingBoxmatchCounter = 0, currentBoundingBoxmatchCounter = 0;
 
-        int previousBoundingBoxmatchingBoxId = -1;
-        int currentBoundingBoxmatchingBoxId = -1;
+        int previousBoundingBoxmatchingBoxId = -1, currentBoundingBoxmatchingBoxId = -1;
+
+        bool previousPointFound = false, currentPointFound = false;
 
         for (const BoundingBox& previousBoundingBox : prevFrame.boundingBoxes) 
         {
-            if (previousBoundingBox.roi.contains(previousPoint))
-            {
+            if (previousBoundingBox.roi.contains(previousPoint)) {
                 previousBoundingBoxmatchCounter++;
-                if (previousBoundingBoxmatchCounter > 1) 
-                {
+                if (previousBoundingBoxmatchCounter > 1) {
                     previousBoundingBoxmatchingBoxId = -1;
+                    previousPointFound = false;
                     break;
                 }
 
                 previousBoundingBoxmatchingBoxId = previousBoundingBox.boxID;
+                previousPointFound = true;
             }
         }
 
         for (const BoundingBox& currentBoundingBox : currFrame.boundingBoxes)
         {
-             if (currentBoundingBox.roi.contains(currentPoint))
-             {
+             if (currentBoundingBox.roi.contains(currentPoint)) {
                 currentBoundingBoxmatchCounter++;
-                if (currentBoundingBoxmatchCounter > 1) 
-                {
+                if (currentBoundingBoxmatchCounter > 1) {
                     currentBoundingBoxmatchingBoxId = -1;
+                    currentPointFound = false;
                     break;
                 }
 
                 currentBoundingBoxmatchingBoxId = currentBoundingBox.boxID;
+                currentPointFound = true;
             }
         }
         
-        if ((previousBoundingBoxmatchCounter==1) && (currentBoundingBoxmatchCounter == 1))
+        if ((previousPointFound == true) && (currentPointFound == true))
         {
             TemporalMatchesList.at(previousBoundingBoxmatchingBoxId).at(currentBoundingBoxmatchingBoxId)++;
         }
