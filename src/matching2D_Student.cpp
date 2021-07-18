@@ -23,7 +23,7 @@ CollectedData matchDescriptors( std::vector<cv::KeyPoint> &kPtsSource,
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-        int normType = cv::NORM_HAMMING;
+        int normType{ ((descriptorFamily.compare("DES_BINARY") == 0) ? cv::NORM_HAMMING : cv::NORM_L2) };
         matcher = cv::BFMatcher::create(normType, crossCheck);
         std::cout << "BF matching cross-check = " << crossCheck << std::endl;
 
