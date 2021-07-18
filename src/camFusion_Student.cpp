@@ -196,9 +196,9 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
     for (int columnIndex = 0; columnIndex < columns; columnIndex++) 
     {
-        int rowIndex = std::distance(std::begin(listOfMatches.at(columnIndex)), 
-            std::max_element(std::begin(listOfMatches.at(columnIndex)), 
-            std::end(listOfMatches.at(columnIndex))));
+        int rowIndex = std::distance(std::begin(TemporalMatchesList.at(columnIndex)), 
+            std::max_element(std::begin(TemporalMatchesList.at(columnIndex)), 
+            std::end(TemporalMatchesList.at(columnIndex))));
 
         if (TemporalMatchesList.at(columnIndex).at(rowIndex) == 1)
         {
