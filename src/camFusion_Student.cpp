@@ -153,7 +153,48 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    // auxiliary variables
+    double dT = 1.0/frameRate; // time between two measurements in seconds
+
+    // find closest distance to Lidar points 
+    double minXPrev = 1e9;
+    double minXCurr = 1e9;
+
+    double averageMinXPrev = 0.0;
+    double averageMinXCurr = 0.0;
+
+    int counterMinXPrev = 0;
+    int CounterMinXCurr = 0;
+
+    const double laneWidth = 4.0;  // assumed width of the ego lane
+
+    for(auto it=lidarPointsPrev.begin(); it!=lidarPointsPrev.end(); ++it) 
+    {
+        if (std::abs(it->y) > laneWidth) { continue; }
+        if(minXPrev>it->x)
+        {
+            minXPrev = it->x;
+            counterMinXPrev++;
+            averageMinXPrev = averageMinXPrev + minXPrev;
+        }
+    }
+
+    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) 
+    {
+        if (std::abs(it->y) > laneWidth) { continue; }
+        if(minXCurr>it->x)
+        {
+            minXCurr = it->x;
+            CounterMinXCurr++;
+            averageMinXCurr = averageMinXCurr + minXCurr;
+        }
+    }
+
+    minXPrev = averageMinXPrev/counterMinXPrev;
+    minXCurr = averageMinXCurr/CounterMinXCurr;
+
+    // compute TTC from both measurements
+    TTC = minXCurr * dT / (minXPrev-minXCurr);
 }
 
 
@@ -183,8 +224,8 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
         for (const BoundingBox& previousBoundingBox : prevFrame.boundingBoxes) 
         {
-             if (previousBoundingBox.roi.contains(previousPoint))
-             {
+            if (previousBoundingBox.roi.contains(previousPoint))
+            {
                 previousBoundingBoxmatchCounter++;
                 if (previousBoundingBoxmatchCounter > 1) 
                 {
