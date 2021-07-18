@@ -134,70 +134,6 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
     }
 }
 
-
-// associate a given bounding box with the keypoints it contains
-void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
-{
-    // ...
-}
-
-
-// Compute time-to-collision (TTC) based on keypoint correspondences in successive images
-void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
-                      std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
-{
-    // ...
-}
-
-
-void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
-                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
-{
-    // auxiliary variables
-    double dT = 1.0/frameRate; // time between two measurements in seconds
-
-    // find closest distance to Lidar points 
-    double minXPrev = 1e9;
-    double minXCurr = 1e9;
-
-    double averageMinXPrev = 0.0;
-    double averageMinXCurr = 0.0;
-
-    int counterMinXPrev = 0;
-    int CounterMinXCurr = 0;
-
-    const double laneWidth = 4.0;  // assumed width of the ego lane
-
-    for(auto it=lidarPointsPrev.begin(); it!=lidarPointsPrev.end(); ++it) 
-    {
-        if (std::abs(it->y) > laneWidth) { continue; }
-        if(minXPrev>it->x)
-        {
-            minXPrev = it->x;
-            counterMinXPrev++;
-            averageMinXPrev = averageMinXPrev + minXPrev;
-        }
-    }
-
-    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) 
-    {
-        if (std::abs(it->y) > laneWidth) { continue; }
-        if(minXCurr>it->x)
-        {
-            minXCurr = it->x;
-            CounterMinXCurr++;
-            averageMinXCurr = averageMinXCurr + minXCurr;
-        }
-    }
-
-    minXPrev = averageMinXPrev/counterMinXPrev;
-    minXCurr = averageMinXCurr/CounterMinXCurr;
-
-    // compute TTC from both measurements
-    TTC = minXCurr * dT / (minXPrev-minXCurr);
-}
-
-
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
     std::map<pair<int, int>, int> counts;
@@ -260,11 +196,74 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
     for (int columnIndex = 0; columnIndex < columns; columnIndex++) 
     {
-        for (int rowIndex = 0; rowIndex < rows; rowIndex++)
+        int rowIndex = std::distance(std::begin(listOfMatches.at(columnIndex)), 
+            std::max_element(std::begin(listOfMatches.at(columnIndex)), 
+            std::end(listOfMatches.at(columnIndex))));
 
         if (TemporalMatchesList.at(columnIndex).at(rowIndex) == 1)
         {
             bbBestMatches[prevFrame.boundingBoxes.at(columnIndex).boxID] = currFrame.boundingBoxes.at(rowIndex).boxID;
         }        
     }
+}
+
+void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
+                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+{
+    // auxiliary variables
+    double dT = 1.0/frameRate; // time between two measurements in seconds
+
+    // find closest distance to Lidar points 
+    double minXPrev = 1e9;
+    double minXCurr = 1e9;
+
+    double averageMinXPrev = 0.0;
+    double averageMinXCurr = 0.0;
+
+    int counterMinXPrev = 0;
+    int CounterMinXCurr = 0;
+
+    const double laneWidth = 4.0;  // assumed width of the ego lane
+
+    for(auto it=lidarPointsPrev.begin(); it!=lidarPointsPrev.end(); ++it) 
+    {
+        if (std::abs(it->y) > laneWidth) { continue; }
+        if(minXPrev>it->x)
+        {
+            minXPrev = it->x;
+            counterMinXPrev++;
+            averageMinXPrev = averageMinXPrev + minXPrev;
+        }
+    }
+
+    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) 
+    {
+        if (std::abs(it->y) > laneWidth) { continue; }
+        if(minXCurr>it->x)
+        {
+            minXCurr = it->x;
+            CounterMinXCurr++;
+            averageMinXCurr = averageMinXCurr + minXCurr;
+        }
+    }
+
+    minXPrev = averageMinXPrev/counterMinXPrev;
+    minXCurr = averageMinXCurr/CounterMinXCurr;
+
+    // compute TTC from both measurements
+    TTC = minXCurr * dT / (minXPrev-minXCurr);
+}
+
+// associate a given bounding box with the keypoints it contains
+void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
+{
+    // ...
+}
+
+
+// Compute time-to-collision (TTC) based on keypoint correspondences in successive images
+void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
+                      std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
+{
+    // ...
 }
