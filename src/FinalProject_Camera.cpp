@@ -323,6 +323,10 @@ int main(int argc, const char *argv[])
                 /* MATCH KEYPOINT DESCRIPTORS */
 
                 vector<cv::DMatch> matches;
+                const std::string descriptorFamily{ (timeInformation[timeInformationIndex].descriptorType.compare("SIFT") == 0) ? "DES_HOG" : "DES_BINARY" };
+                std::cout << "descriptorFamily = " << descriptorFamily << std::endl;
+                std::cout << "descriptorType = " << timeInformation[timeInformationIndex].descriptorType << std::endl;
+                
                 //string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
                 //string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
                 //string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
