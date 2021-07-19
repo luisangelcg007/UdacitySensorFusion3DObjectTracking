@@ -195,6 +195,12 @@ int main(int argc, const char *argv[])
             // push image into data frame buffer
             DataFrame frame;
             frame.cameraImg = img;
+
+            if(dataBuffer.size() == dataBufferSize)
+            {
+                dataBuffer.erase(begin(dataBuffer));
+            }
+
             dataBuffer.push_back(frame);
 
             cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
@@ -295,7 +301,7 @@ int main(int argc, const char *argv[])
             /* EXTRACT KEYPOINT DESCRIPTORS */
 
             cv::Mat descriptors;
-            string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+            //string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
             collectedData = descKeypoints((dataBuffer.end() - 1)->keypoints, 
                                            (dataBuffer.end() - 1)->cameraImg, 
                                            descriptors, 
@@ -307,7 +313,6 @@ int main(int argc, const char *argv[])
             (dataBuffer.end() - 1)->descriptors = descriptors;
 
             cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
-
 
             if (dataBuffer.size() > 1) // wait until at least two images have been processed
             {
@@ -322,14 +327,14 @@ int main(int argc, const char *argv[])
                 // string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
                 // string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
-                matchDescriptors((dataBuffer.end() - 2)->keypoints, 
-                                (dataBuffer.end() - 1)->keypoints,
-                                (dataBuffer.end() - 2)->descriptors, 
-                                (dataBuffer.end() - 1)->descriptors,
-                                matches, 
-                                descriptorFamily, 
-                                timeInformation[timeInformationIndex].matcherType, 
-                                timeInformation[timeInformationIndex].selectorType);
+                collectedData = matchDescriptors((dataBuffer.end() - 2)->keypoints, 
+                                                (dataBuffer.end() - 1)->keypoints,
+                                                (dataBuffer.end() - 2)->descriptors, 
+                                                (dataBuffer.end() - 1)->descriptors,
+                                                matches, 
+                                                descriptorFamily, 
+                                                timeInformation[timeInformationIndex].matcherType, 
+                                                timeInformation[timeInformationIndex].selectorType);
 
                 timeInformation[timeInformationIndex].matchedPoints.at(imgIndex) = collectedData.numKeyPoints;
                 timeInformation[timeInformationIndex].matchElapsedTime.at(imgIndex) = collectedData.elapsedTime;
@@ -339,7 +344,6 @@ int main(int argc, const char *argv[])
 
                 cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
-                
                 /* TRACK 3D OBJECT BOUNDING BOXES */
 
                 //// STUDENT ASSIGNMENT
