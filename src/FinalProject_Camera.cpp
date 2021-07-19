@@ -426,6 +426,10 @@ int main(int argc, const char *argv[])
                 } // eof loop over all BB matches            
 
             }
+            else 
+            {
+                timeInformation[timeInformationIndex].matchedPoints.at(imgIndex) = timeInformation[timeInformationIndex].matchElapsedTime.at(imgIndex) = 0;
+            }
 
         } // eof loop over all images
         std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=\n" << std::endl;
