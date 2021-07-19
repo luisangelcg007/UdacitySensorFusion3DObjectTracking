@@ -1,10 +1,10 @@
-
 #include <numeric>
 #include "matching2D.hpp"
 
 using namespace std;
 
 static CollectedData collectedData;
+static double milliseconds;
 
 // Find best matches for keypoints in two camera images based on several matching methods
 CollectedData matchDescriptors( std::vector<cv::KeyPoint> &kPtsSource, 
@@ -23,90 +23,57 @@ CollectedData matchDescriptors( std::vector<cv::KeyPoint> &kPtsSource,
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-        std::cout << "ANGEL0" << std::endl;
-        int normType{ ((descriptorType.compare("DES_BINARY") == 0) ? cv::NORM_HAMMING : cv::NORM_L2) };
-        std::cout << "ANGEL-1" << std::endl;
+        int normType = cv::NORM_HAMMING;
         matcher = cv::BFMatcher::create(normType, crossCheck);
         std::cout << "BF matching cross-check = " << crossCheck << std::endl;
-        std::cout << "ANGEL1" << std::endl;
 
         if (descRef.type() != CV_8U) 
         { 
-        std::cout << "ANGEL2" << std::endl;
-            descRef.convertTo(descRef, CV_8U);
-        std::cout << "ANGEL3" << std::endl; 
+            descRef.convertTo(descRef, CV_8U); 
         }
-        std::cout << "ANGEL-2" << std::endl;
         if (descSource.type() != CV_8U) 
         { 
-        std::cout << "ANGEL4" << std::endl;
             descSource.convertTo(descSource, CV_8U);
-        std::cout << "ANGEL5" << std::endl;
         }
-        std::cout << "ANGEL-3" << std::endl;
     }
     else if (matcherType.compare("MAT_FLANN") == 0)
     {
-        std::cout << "ANGEL6" << std::endl;
         if (descRef.type() != CV_32F) 
         { 
-        std::cout << "ANGEL7" << std::endl;
             descRef.convertTo(descRef, CV_32F); 
-        std::cout << "ANGEL8" << std::endl;
         }
         if (descSource.type() != CV_32F) 
         { 
-        std::cout << "ANGEL9" << std::endl;
             descSource.convertTo(descSource, CV_32F);
-        std::cout << "ANGEL10" << std::endl;
         }
 
-        std::cout << "ANGEL11" << std::endl;
         matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
-        std::cout << "ANGEL12" << std::endl;
         std::cout << "FLANN matching" << std::endl;
     }
 
-    std::cout << "ANGEL-4" << std::endl;
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
     { // nearest neighbor (best match)
-        std::cout << "ANGEL-5" << std::endl;
         t = static_cast<double>(cv::getTickCount());
-        std::cout << "ANGEL-6" << std::endl;
         matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
-        std::cout << "ANGEL-7" << std::endl;
         t = ((static_cast<double>(cv::getTickCount())) - t) / cv::getTickFrequency();
-        std::cout << "ANGEL-8" << std::endl;
     }
     else if (selectorType.compare("SEL_KNN") == 0)
     { // k nearest neighbors (k=2)
-
-        std::cout << "ANGEL-9" << std::endl;
         std::vector<std::vector<cv::DMatch>> kNearestNeighborMatches;
         t = static_cast<double>(cv::getTickCount());
         
-        std::cout << "ANGEL-10" << std::endl;
         matcher->knnMatch(descSource, descRef, kNearestNeighborMatches, 2);
 
-        std::cout << "ANGEL-11" << std::endl;
-        int count = 0;
         for (auto index{ std::begin(kNearestNeighborMatches) }; index != std::end(kNearestNeighborMatches); index = index+1) 
         {
-            count++;
-            std::cout << "count = " << count << std::endl;
             if ((*index).at(0).distance < (0.8 * (*index).at(1).distance)) 
             {
-            std::cout << "count 2= " << count << std::endl;
                 matches.push_back((*index).at(0));
-            std::cout << "count 3= " << count << std::endl;
             }
         }
 
-        std::cout << "ANGEL-12" << std::endl;
         t = ((static_cast<double>(cv::getTickCount())) - t) / cv::getTickFrequency();
-
-        std::cout << "ANGEL-13" << std::endl;
     }
     
     collectedData.numKeyPoints = (int)matches.size();
