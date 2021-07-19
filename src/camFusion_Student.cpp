@@ -134,6 +134,125 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
     }
 }
 
+void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
+{
+    std::map<pair<int, int>, int> counts;
+
+    const int columns = (int)(prevFrame.boundingBoxes.size());
+    const int rows = (int)(currFrame.boundingBoxes.size());
+
+    std::vector<std::vector<int>> TemporalMatchesList(columns, std::vector<int>(rows, 0));
+
+    for (const auto& dMatch : matches) 
+    {
+        const int current_idx = dMatch.trainIdx;
+        const int previous_idx = dMatch.queryIdx;
+
+        // get points for previous and current frame
+        const cv::Point2f currentPoint = currFrame.keypoints[current_idx].pt;
+        const cv::Point2f previousPoint = prevFrame.keypoints[previous_idx].pt;
+
+        int previousBoundingBoxmatchCounter = 0, currentBoundingBoxmatchCounter = 0;
+
+        int previousBoundingBoxmatchingBoxId = -1, currentBoundingBoxmatchingBoxId = -1;
+
+        bool previousPointFound = false, currentPointFound = false;
+
+        for (const BoundingBox& previousBoundingBox : prevFrame.boundingBoxes) 
+        {
+            if (previousBoundingBox.roi.contains(previousPoint)) {
+                previousBoundingBoxmatchCounter++;
+                if (previousBoundingBoxmatchCounter > 1) {
+                    previousBoundingBoxmatchingBoxId = -1;
+                    previousPointFound = false;
+                    break;
+                }
+
+                previousBoundingBoxmatchingBoxId = previousBoundingBox.boxID;
+                previousPointFound = true;
+            }
+        }
+
+        for (const BoundingBox& currentBoundingBox : currFrame.boundingBoxes)
+        {
+             if (currentBoundingBox.roi.contains(currentPoint)) {
+                currentBoundingBoxmatchCounter++;
+                if (currentBoundingBoxmatchCounter > 1) {
+                    currentBoundingBoxmatchingBoxId = -1;
+                    currentPointFound = false;
+                    break;
+                }
+
+                currentBoundingBoxmatchingBoxId = currentBoundingBox.boxID;
+                currentPointFound = true;
+            }
+        }
+        
+        if ((previousPointFound == true) && (currentPointFound == true))
+        {
+            TemporalMatchesList.at(previousBoundingBoxmatchingBoxId).at(currentBoundingBoxmatchingBoxId)++;
+        }
+    }
+
+    for (int columnIndex = 0; columnIndex < columns; columnIndex++) 
+    {
+        int rowIndex = std::distance(std::begin(TemporalMatchesList.at(columnIndex)), 
+            std::max_element(std::begin(TemporalMatchesList.at(columnIndex)), 
+            std::end(TemporalMatchesList.at(columnIndex))));
+
+        if (TemporalMatchesList.at(columnIndex).at(rowIndex) == 1)
+        {
+            bbBestMatches[prevFrame.boundingBoxes.at(columnIndex).boxID] = currFrame.boundingBoxes.at(rowIndex).boxID;
+        }        
+    }
+}
+
+void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
+                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+{
+    // auxiliary variables
+    double dT = 1.0/frameRate; // time between two measurements in seconds
+
+    // find closest distance to Lidar points 
+    double minXPrev = 1e9;
+    double minXCurr = 1e9;
+
+    double averageMinXPrev = 0.0;
+    double averageMinXCurr = 0.0;
+
+    int counterMinXPrev = 0;
+    int CounterMinXCurr = 0;
+
+    const double laneWidth = 4.0;  // assumed width of the ego lane
+
+    for(auto it=lidarPointsPrev.begin(); it!=lidarPointsPrev.end(); ++it) 
+    {
+        if (std::abs(it->y) > laneWidth) { continue; }
+        if(minXPrev>it->x)
+        {
+            minXPrev = it->x;
+            counterMinXPrev++;
+            averageMinXPrev = averageMinXPrev + minXPrev;
+        }
+    }
+
+    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) 
+    {
+        if (std::abs(it->y) > laneWidth) { continue; }
+        if(minXCurr>it->x)
+        {
+            minXCurr = it->x;
+            CounterMinXCurr++;
+            averageMinXCurr = averageMinXCurr + minXCurr;
+        }
+    }
+
+    minXPrev = averageMinXPrev/counterMinXPrev;
+    minXCurr = averageMinXCurr/CounterMinXCurr;
+
+    // compute TTC from both measurements
+    TTC = minXCurr * dT / (minXPrev-minXCurr);
+}
 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
@@ -145,19 +264,6 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 // Compute time-to-collision (TTC) based on keypoint correspondences in successive images
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
-{
-    // ...
-}
-
-
-void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
-                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
-{
-    // ...
-}
-
-
-void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
     // ...
 }
