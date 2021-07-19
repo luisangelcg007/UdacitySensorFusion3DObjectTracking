@@ -90,7 +90,7 @@ int main(int argc, const char *argv[])
     TimeInformation auxiliaryTimeInformation;
     bool checkAkaseDetectorDescriptorCombination;
     bool checkSiftDetectorOrbDescriptorCombination;
-    const std::vector<std::string> detectorTypes = { "SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT" };
+    const std::vector<std::string> detectorTypes = {"HARRIS",  "SHITOMASI", "FAST", "BRISK", "ORB", "AKAZE", "SIFT" };
     const std::vector<std::string> descriptorTypes = { "BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT" };
     const std::vector<std::string> matcherTypes = { "MAT_BF" };
     const std::vector<std::string> selectorTypes = { "SEL_KNN" };
@@ -327,6 +327,7 @@ int main(int argc, const char *argv[])
                 // string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
                 // string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
+<<<<<<< HEAD
                 collectedData = matchDescriptors((dataBuffer.end() - 2)->keypoints, 
                                                 (dataBuffer.end() - 1)->keypoints,
                                                 (dataBuffer.end() - 2)->descriptors, 
@@ -335,13 +336,27 @@ int main(int argc, const char *argv[])
                                                 descriptorFamily, 
                                                 timeInformation[timeInformationIndex].matcherType, 
                                                 timeInformation[timeInformationIndex].selectorType);
+=======
+                std::cout << "ANGEL20" << std::endl;
+                collectedData = matchDescriptors((dataBuffer.end() - 2)->keypoints, 
+                                (dataBuffer.end() - 1)->keypoints,
+                                (dataBuffer.end() - 2)->descriptors, 
+                                (dataBuffer.end() - 1)->descriptors,
+                                matches, 
+                                descriptorFamily, 
+                                timeInformation[timeInformationIndex].matcherType, 
+                                timeInformation[timeInformationIndex].selectorType);
+>>>>>>> 195152781658961966f2fef7bba5bbb8a12178f8
 
+                std::cout << "ANGEL21" << std::endl;
                 timeInformation[timeInformationIndex].matchedPoints.at(imgIndex) = collectedData.numKeyPoints;
                 timeInformation[timeInformationIndex].matchElapsedTime.at(imgIndex) = collectedData.elapsedTime;
 
+                std::cout << "ANGEL22" << std::endl;
                 // store matches in current data frame
                 (dataBuffer.end() - 1)->kptMatches = matches;
 
+                std::cout << "ANGEL23" << std::endl;
                 cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
                 /* TRACK 3D OBJECT BOUNDING BOXES */
