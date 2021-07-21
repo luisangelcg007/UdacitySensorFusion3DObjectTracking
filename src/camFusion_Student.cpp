@@ -243,8 +243,6 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
     // compute TTC from both measurements
     TTC = minXCurr * dT / (minXPrev-minXCurr);
-
-    cout << "TTC lidar =" << TTC << endl;
 }
 
 // associate a given bounding box with the keypoints it contains
