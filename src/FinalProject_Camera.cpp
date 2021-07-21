@@ -90,9 +90,8 @@ int main(int argc, const char *argv[])
     TimeInformation auxiliaryTimeInformation;
     bool checkAkaseDetectorDescriptorCombination;
     bool checkSiftDetectorOrbDescriptorCombination;
-    //const std::vector<std::string> detectorTypes = {"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT" };
-    const std::vector<std::string> detectorTypes = {"SHITOMASI"};
-    const std::vector<std::string> descriptorTypes = { "BRISK"};
+    const std::vector<std::string> detectorTypes = {"HARRIS",  "SHITOMASI", "FAST", "BRISK", "ORB", "AKAZE", "SIFT" };
+    const std::vector<std::string> descriptorTypes = { "BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT" };
     const std::vector<std::string> matcherTypes = { "MAT_BF" };
     const std::vector<std::string> selectorTypes = { "SEL_KNN" };
 
