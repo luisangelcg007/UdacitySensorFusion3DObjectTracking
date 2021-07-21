@@ -136,12 +136,16 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    std::map<pair<int, int>, int> counts;
+    map<pair<int, int>, int> pointsInBoundingBoxes;
+    map<pair<int, int>, int>::iterator pointsInBoundingBoxesIterator;
 
     const int columns = (int)(prevFrame.boundingBoxes.size());
     const int rows = (int)(currFrame.boundingBoxes.size());
 
-    std::vector<std::vector<int>> TemporalMatchesList(columns, std::vector<int>(rows, 0));
+    int previousBoundingBoxmatchingBoxId;
+    int currentBoundingBoxmatchingBoxId;
+
+    vector<std::vector<int>> TemporalMatchesList(columns, std::vector<int>(rows, 0));
 
     for (const auto& dMatch : matches) 
     {
@@ -154,57 +158,47 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
         int previousBoundingBoxmatchCounter = 0, currentBoundingBoxmatchCounter = 0;
 
-        int previousBoundingBoxmatchingBoxId = -1, currentBoundingBoxmatchingBoxId = -1;
+        bool previousPointFound = false;
+        bool currentPointFound = false;
 
-        bool previousPointFound = false, currentPointFound = false;
-
-        for (const BoundingBox& previousBoundingBox : prevFrame.boundingBoxes) 
+        for (const BoundingBox& previousBoundingBox : prevFrame.boundingBoxes)
         {
-            if (previousBoundingBox.roi.contains(previousPoint)) {
-                previousBoundingBoxmatchCounter++;
-                if (previousBoundingBoxmatchCounter > 1) {
-                    previousBoundingBoxmatchingBoxId = -1;
-                    previousPointFound = false;
-                    break;
+            for (const BoundingBox& currentBoundingBox : currFrame.boundingBoxes)
+            {
+                if (previousBoundingBox.roi.contains(previousPoint))
+                {
+                    if (currentBoundingBox.roi.contains(currentPoint))
+                    {
+                        previousPointFound = true;
+                        currentPointFound = true;
+                    }
                 }
 
-                previousBoundingBoxmatchingBoxId = previousBoundingBox.boxID;
-                previousPointFound = true;
-            }
-        }
-
-        for (const BoundingBox& currentBoundingBox : currFrame.boundingBoxes)
-        {
-             if (currentBoundingBox.roi.contains(currentPoint)) {
-                currentBoundingBoxmatchCounter++;
-                if (currentBoundingBoxmatchCounter > 1) {
-                    currentBoundingBoxmatchingBoxId = -1;
-                    currentPointFound = false;
-                    break;
+                if( previousPointFound == true && currentPointFound == true)
+                {
+                    previousBoundingBoxmatchingBoxId = previousBoundingBox.boxID;
+                    currentBoundingBoxmatchingBoxId = currentBoundingBox.boxID;
+                    TemporalMatchesList.at(previousBoundingBoxmatchingBoxId).at(currentBoundingBoxmatchingBoxId)++;                    
                 }
-
-                currentBoundingBoxmatchingBoxId = currentBoundingBox.boxID;
-                currentPointFound = true;
+                previousPointFound = false;
+                currentPointFound = false;
             }
-        }
-        
-        if ((previousPointFound == true) && (currentPointFound == true))
-        {
-            TemporalMatchesList.at(previousBoundingBoxmatchingBoxId).at(currentBoundingBoxmatchingBoxId)++;
         }
     }
 
     for (int columnIndex = 0; columnIndex < columns; columnIndex++) 
     {
-        int rowIndex = std::distance(std::begin(TemporalMatchesList.at(columnIndex)), 
-            std::max_element(std::begin(TemporalMatchesList.at(columnIndex)), 
-            std::end(TemporalMatchesList.at(columnIndex))));
+        vector<int>::iterator maxElementIterator = max_element(begin(TemporalMatchesList.at(columnIndex)), 
+                                                    end(TemporalMatchesList.at(columnIndex)));
 
-        if (TemporalMatchesList.at(columnIndex).at(rowIndex) == 1)
+        int rowIndex = std::distance(
+            std::begin(TemporalMatchesList.at(columnIndex)), maxElementIterator);
+
+        if (TemporalMatchesList.at(columnIndex).at(rowIndex) > 0)
         {
             bbBestMatches[prevFrame.boundingBoxes.at(columnIndex).boxID] = currFrame.boundingBoxes.at(rowIndex).boxID;
         }        
-    }
+    }    
 }
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
@@ -212,7 +206,6 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 {
     // auxiliary variables
     double dT = 1.0/frameRate; // time between two measurements in seconds
-
     // find closest distance to Lidar points 
     double minXPrev = 1e9;
     double minXCurr = 1e9;
@@ -230,9 +223,8 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
         if (std::abs(it->y) > laneWidth) { continue; }
         if(minXPrev>it->x)
         {
-            minXPrev = it->x;
+            averageMinXPrev = averageMinXPrev + it->x;
             counterMinXPrev++;
-            averageMinXPrev = averageMinXPrev + minXPrev;
         }
     }
 
@@ -241,9 +233,8 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
         if (std::abs(it->y) > laneWidth) { continue; }
         if(minXCurr>it->x)
         {
-            minXCurr = it->x;
+            averageMinXCurr = averageMinXCurr + it->x;
             CounterMinXCurr++;
-            averageMinXCurr = averageMinXCurr + minXCurr;
         }
     }
 
@@ -252,6 +243,8 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
     // compute TTC from both measurements
     TTC = minXCurr * dT / (minXPrev-minXCurr);
+
+    cout << "TTC lidar =" << TTC << endl;
 }
 
 // associate a given bounding box with the keypoints it contains

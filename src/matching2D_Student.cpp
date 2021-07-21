@@ -23,10 +23,11 @@ CollectedData matchDescriptors( std::vector<cv::KeyPoint> &kPtsSource,
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-        int normType = cv::NORM_HAMMING;
-        matcher = cv::BFMatcher::create(normType, crossCheck);
-        std::cout << "BF matching cross-check = " << crossCheck << std::endl;
+        //int normType = cv::NORM_HAMMING;
 
+        const int normType{((descriptorType.compare("DES_BINARY")==0) ? cv::NORM_HAMMING : cv::NORM_L2) };
+        matcher = cv::BFMatcher::create(normType, crossCheck);
+        
         if (descRef.type() != CV_8U) 
         { 
             descRef.convertTo(descRef, CV_8U); 
@@ -50,6 +51,9 @@ CollectedData matchDescriptors( std::vector<cv::KeyPoint> &kPtsSource,
         matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
         std::cout << "FLANN matching" << std::endl;
     }
+    
+    if(descRef.empty()) {std::cout << "descRef.empty yes = "<< std::endl;}
+    if(descSource.empty()) {std::cout << "descSource.empty yes = "<< std::endl;}
 
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
@@ -63,16 +67,18 @@ CollectedData matchDescriptors( std::vector<cv::KeyPoint> &kPtsSource,
         std::vector<std::vector<cv::DMatch>> kNearestNeighborMatches;
         t = static_cast<double>(cv::getTickCount());
         
-        matcher->knnMatch(descSource, descRef, kNearestNeighborMatches, 2);
-
-        for (auto index{ std::begin(kNearestNeighborMatches) }; index != std::end(kNearestNeighborMatches); index = index+1) 
+        if((descRef.empty() == false) && (descRef.empty() == false))
         {
-            if ((*index).at(0).distance < (0.8 * (*index).at(1).distance)) 
+            matcher->knnMatch(descSource, descRef, kNearestNeighborMatches, 2);
+            
+            for (auto index = 0; index < kNearestNeighborMatches.size(); index = index+1) 
             {
-                matches.push_back((*index).at(0));
+                if (kNearestNeighborMatches[index][0].distance < (0.8 * kNearestNeighborMatches[index][1].distance)) 
+                {
+                    matches.push_back(kNearestNeighborMatches[index][0]);
+                }
             }
         }
-
         t = ((static_cast<double>(cv::getTickCount())) - t) / cv::getTickFrequency();
     }
     

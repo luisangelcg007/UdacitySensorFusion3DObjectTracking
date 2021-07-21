@@ -90,8 +90,9 @@ int main(int argc, const char *argv[])
     TimeInformation auxiliaryTimeInformation;
     bool checkAkaseDetectorDescriptorCombination;
     bool checkSiftDetectorOrbDescriptorCombination;
-    const std::vector<std::string> detectorTypes = {"HARRIS",  "SHITOMASI", "FAST", "BRISK", "ORB", "AKAZE", "SIFT" };
-    const std::vector<std::string> descriptorTypes = { "BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT" };
+    //const std::vector<std::string> detectorTypes = {"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT" };
+    const std::vector<std::string> detectorTypes = {"SHITOMASI"};
+    const std::vector<std::string> descriptorTypes = { "BRISK"};
     const std::vector<std::string> matcherTypes = { "MAT_BF" };
     const std::vector<std::string> selectorTypes = { "SEL_KNN" };
 
@@ -393,6 +394,7 @@ int main(int argc, const char *argv[])
                         //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
                         double ttcLidar; 
                         computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
+                        timeInformation[timeInformationIndex].ttcLidar.at(imgIndex) = ttcLidar;
                         //// EOF STUDENT ASSIGNMENT
 
                         //// STUDENT ASSIGNMENT
@@ -401,6 +403,10 @@ int main(int argc, const char *argv[])
                         double ttcCamera;
                         clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
                         computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
+
+                        timeInformation[timeInformationIndex].ttcCamera.at(imgIndex) = ttcCamera;
+
+                        timeInformation[timeInformationIndex].enoughLidarOrCameraPointsDetected.at(imgIndex) = true;
                         //// EOF STUDENT ASSIGNMENT
 
                         bVis = false;
@@ -422,18 +428,25 @@ int main(int argc, const char *argv[])
                         }
                         bVis = false;
 
-                    } // eof TTC computation
-                } // eof loop over all BB matches            
+                    } // eof TTC computation  
+                    else 
+                    {
+                        //timeInformation[timeInformationIndex].ttcCamera.at(imgIndex) = 0.0;
+                        //timeInformation[timeInformationIndex].ttcLidar.at(imgIndex) = 0.0;
+                        timeInformation[timeInformationIndex].enoughLidarOrCameraPointsDetected.at(imgIndex) = false;
+                    }
+                } // eof loop over all BB matches         
 
             }
-            else 
+            else
             {
                 timeInformation[timeInformationIndex].matchedPoints.at(imgIndex) = timeInformation[timeInformationIndex].matchElapsedTime.at(imgIndex) = 0;
             }
+            
 
         } // eof loop over all images
         std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=\n" << std::endl;
     }
-    //createCSVOutputFile(timeInformation);
+    createCSVOutputFile(timeInformation);
     return 0;
 }
