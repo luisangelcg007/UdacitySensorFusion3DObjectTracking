@@ -279,7 +279,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 
         if( previousPointFound == true && currentPointFound == true)
         {
-            distance.push_back(cv::norm(kptsCurr.pt - kptsPrev.pt));
+            distance.push_back(cv::norm(currentPoint - previousPoint));
         }
 
         previousPointFound = false;
