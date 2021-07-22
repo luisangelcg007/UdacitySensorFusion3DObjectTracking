@@ -279,7 +279,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 
         if( previousPointFound == true && currentPointFound == true)
         {
-            distance.push_back(cv::norm(kptCurr.pt - kptPrev.pt));
+            distance.push_back(cv::norm(kptsCurr.pt - kptsPrev.pt));
         }
 
         previousPointFound = false;
@@ -330,7 +330,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
         // inner kpt.-loop
         for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2) 
         {
-            double minDist = 100.0
+            double minDist = 100.0;
             
             // get next keypoint and its matched partner in the prev. frame
             cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);
@@ -341,7 +341,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
             double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
 
             // avoid division by zero
-            if (distPrev > numeric_limits<double>::epsilon() && >= minDist) 
+            if (distPrev > numeric_limits<double>::epsilon() && distPrev >= minDist) 
             {
                 double distRatio = distCurr / distPrev;
                 distanceRatios.push_back(distRatio);
