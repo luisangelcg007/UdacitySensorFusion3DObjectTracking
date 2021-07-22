@@ -248,13 +248,127 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
-}
+    bool previousPointFound = false;
+    bool currentPointFound = false;
+    
+    double distanceMean = 0.0;
+    int currentFrameIndex;
+    int previousFrameIndex;
 
+    std::vector<double> distance;
+    
+    boundingBox.keypoints.clear();
+    boundingBox.kptMatches.clear();
+
+    // First stage - just check to see if it's within ROI
+    for (auto& dMatch : kptMatches)
+    {   
+        currentFrameIndex = dMatch.trainIdx; // trainIdx --> current frame
+        previousFrameIndex = dMatch.queryIdx; // queryIdx --> previous frame
+        cv::Point2f currentPoint = kptsCurr[currentFrameIndex].pt;
+        cv::Point2f previousPoint = kptsPrev[previousFrameIndex].pt;
+
+        if (boundingBox.roi.contains(previousPoint))
+        {
+            if (boundingBox.roi.contains(currentPoint))
+            {
+                previousPointFound = true;
+                currentPointFound = true;
+            }
+        }
+
+        if( previousPointFound == true && currentPointFound == true)
+        {
+            distance.push_back(cv::norm(kptCurr.pt - kptPrev.pt));
+        }
+
+        previousPointFound = false;
+        currentPointFound = false;
+    }
+
+    for (size_t i = 0; i < distance.size(); i++)
+    {
+        distanceMean = distanceMean + distance[i];
+    }
+    distanceMean = distanceMean / distance.size();
+    distanceMean = distanceMean * 1.5;
+        
+    currentPointFound = false;
+    for (auto point : kptMatches) 
+    {
+		auto &kptCurr{ kptsCurr.at(point.trainIdx) };
+
+        if (boundingBox.roi.contains(kptCurr.pt))
+        {
+            previousFrameIndex = point.queryIdx;
+            auto &kptPrev{ kptsPrev.at(previousFrameIndex) };
+
+            if (cv::norm(kptCurr.pt - kptPrev.pt) < distanceMean) 
+            {
+                boundingBox.keypoints.push_back(kptCurr);
+                boundingBox.kptMatches.push_back(point);
+            }
+
+        }
+	}
+}
 
 // Compute time-to-collision (TTC) based on keypoint correspondences in successive images
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-    // ...
+    long medianIndex;
+    float medianDistanceRatio;
+    vector<double> distanceRatios;
+
+    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1) 
+    {
+        // get current keypoint and its matched partner in the prev. frame
+        cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
+        cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
+
+        // inner kpt.-loop
+        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2) 
+        {
+            double minDist = 100.0
+            
+            // get next keypoint and its matched partner in the prev. frame
+            cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);
+            cv::KeyPoint kpInnerPrev = kptsPrev.at(it2->queryIdx);
+
+            // compute distances and distance ratios
+            double distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+
+            // avoid division by zero
+            if (distPrev > numeric_limits<double>::epsilon() && >= minDist) 
+            {
+                double distRatio = distCurr / distPrev;
+                distanceRatios.push_back(distRatio);
+            }
+        }  // eof inner loop over all matched kpts
+    }    // eof outer loop over all matched kpts
+
+    // only continue if list of distance ratios is not empty
+    if (distanceRatios.size() == 0) 
+    { 
+        TTC = NAN;
+        return;
+    }
+
+    sort(begin(distanceRatios), end(distanceRatios));
+    medianIndex = (long)(floor(distanceRatios.size() / 2.0)) ;
+
+
+    // After removing outliers, find the median ratio
+    medianDistanceRatio = distanceRatios.at(medianIndex);
+    if (distanceRatios.size() % 2 == 0)
+    {
+        medianDistanceRatio = distanceRatios.at(medianIndex - 1) + distanceRatios.at(medianIndex);
+        medianDistanceRatio = medianDistanceRatio / 2.0;
+    }
+
+    // Now calculate TTC
+    const double dT = 1 / frameRate;
+    TTC = -dT / (1.0f - medianDistanceRatio);
 }
