@@ -291,7 +291,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
         distanceMean = distanceMean + distance[i];
     }
     distanceMean = distanceMean / distance.size();
-    distanceMean = distanceMean * 1.5;
+    distanceMean = distanceMean * 1.3;
         
     currentPointFound = false;
     for (auto point : kptMatches) 
