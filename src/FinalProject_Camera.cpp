@@ -64,7 +64,7 @@ void createCSVOutputFile(std::vector<TimeInformation> &timeInformation)
     int indexID = 1;
     for (int timeInformationIndex = 0; timeInformationIndex < timeInformation.size(); timeInformationIndex++ )
     {
-        for (int index = 0; index < 10; index = index + 1) 
+        for (int index = 0; index < 18; index = index + 1) 
         {
             csvStream << indexID << COMMA;
             csvStream << index << COMMA;
